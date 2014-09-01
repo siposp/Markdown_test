@@ -124,15 +124,9 @@ Zoznam entit:
 1. `JPAAgentInfo` - obsahuje záznamy o agentoch, ktoré sú k dispozicii v systému Pikater. Hlavným účelom týchto entit, je prevod informácii z jadra Pikateru na webové rozhranie, čo získa dáta z databáze
 2. `JPADataSetLO` - obsahuje záznamy o datasetoch uložené v databáze. Nejdolezitejsi je polozka OID, čo obsahuje ID PgLOBu, kde je daný dataset uložený. Položka hash slúži na identifikáciu datasetu pomocou MD5 hashe, čo je vypočítaný pri nahrávaní datasetu. Síce može existovať viac JPADataSetLO entit pre rovnaký hash, ale datasety sú považované za identické pri uploadovaní, takže v databáze sú uložené iba raz a všetky entity obsahujú rovnaký OID .
 Z pohladu roznych metod strojového učenia metadata datasetov hrajú významnú rolu, pretože na základe nich možeme odhadnúť podobnosť dvoch datasetov bez jejich načítaní. Z tohto dovodu tieto metadata sú vypočítané už pri uploadovaní datasetov a sú uložené v odpovedajúcich entitách, ktoré sú spojené s entitou datasetu.
-
-
 3. `JPAGlobalMetaData` - entita pre metadata, ktoré je možné zistiť u každého platného datasetu. Obsahuje dáta o tom, že dataset kolko má dátových riadkov (instancov) a aké atributy obsahuje
 4. JPAAttributeMetadata - entita pre metadata jednotlivých relací (stĺpcov) v rámci datasetu. Tieto metadata je možné zistiť u každého typu atributu a možné z nich zistiť pomer chýbajúcich hodnot (napr. počet riadkov, bez klasifikácie), triedy entropie, či atribut je cielový a aj povodne poradie v datasetu.
-
-
 5. JPAAttributeCategoricalMetadata - entita, čo obsahuje dáta špecifické pre kategorické atributy - ktoré obsahujú hodnoty z nejakej množiny, čo je definovaná v hlavičke datasetu - a je odvodená od JPAAttributeMatadata. V súčasnej dobe dodefinuje premennú pre počet kategorií daného datasetu.
-
-
 6. JPAAttributeNumericalMetadata - táto entita je podobne ako JPAAttributeCategoricalMetadata je odvodená od entity JPAAttributeMetadata. Obsahuje metadata pre numerické relácie datasetu. Numerické relácie možu obsahovať hodnoty s pohyblivou desatinnou čiarkou. Pri vytvorení týchto metadat Weka vypočíta interval týchto hodnot, priemer a rozptyl.
 
 
@@ -158,25 +152,33 @@ U datasetov požívame dve dalšie entity, ktoré majú
 ## JPA-špecifická anotácia
 Pomocou anotovania možeme zmeniť sposob, ako JPA spravuje jednotlivé objekty.
 Každá entita má zadefinovaná, že do ktorej tabulky bude uložený jej obsah. K tomu slúži značka `@Table(name=”<názov tabulky>”)` . Táto značka nemusí byť uvedená, v tom prípade názov tabulky, je rovnaký ako meno triedy. Tieto tabulky sú vytvorené automaticky, na základe konfigurácie JPA.
+
+
 Okrem toho vela dotazov je vyriešený pomocou pomenovaných dotazov, ktoré sú zapísané v entitách pomocou značiek `@NameQueries` a `@NamedQuery`.
+
+
 U premenných vo vačšine prípadov nemusíme nič riešiť, lebo vyhovuje nám štandardný prístup JPA. Napríklad primitívne typy sa mapujú bez problémov na primitívne typy databáze.
 Na druhej strane občas potrebujeme používať nasledujúce značky:
-`@Id` a `@GeneratedValue(strategy = GenerationType.AUTO)` - používame u premennej, čo chceme používať ako primárny klúč danej entity. Súčasne používame v entite JPAAbstractEntity a pomocou dedičnosti máme vyriešený primárny klúč pre všetky entity.
-`@Transient` - takto označené premenné nie sú uložené do databáze. V súčasnej verzii používame pre premennú obsahujúce meno entity.
-`@Inheritance(strategy=InheritanceType.TABLE_PER_CLASS` alebo `InheritanceType.JOINED`) - značka slúží na zadefinovanie, že ako chceme vytvoriť tabulky relácií pre jednotlivé entity. Nastavenie `TABLE_PER_CLASS` vytvorí vlastnú tabulku so všetkými hodnotami, ktoré v danej entite vyskytujú (vlastné aj dedené). Nastavenie JOINED vytvorí iba jednu tabulu, pre danú entitu a všetky z nej odvodené. Znamená to, že niektoré položky sú prázdne, ale v niektorých prípadoch je to viac prehladný.
-`@Lob` - síce uloženie velkých súborov máme vyriešené pomocou PgLOBov, ale menšie možeme uložiť aj pomocou JPA anotácie. V tomto prípade premenná sa serializuje a uloží sa do bytového pola - alebo iného kompatibilného typu - v databázovom záznamu. Tento prístup využívame napr. u uložení modelov výpočtov, alebo u dlhých reťazcov XMLov.
-`@Temporal(TemporalType.TIMESTAMP)` - časové údaje označime pomocou tejto značky a definujeme, že v akom formátu chcem ich uložiť
-`@Nullable` - daná premenná može byť null v databáze
-`@Enumerated(EnumType.STRING)` - u premenných odvodených od java.lang.Enum možeme zadefinovať, či chcem aby sa do databáze uložil název hodnoty, alebo jeho poradové číslo (`EnumType.ORDINAL`). Uložiť Enum ako String je výhodnejšie z tohto dovodu, že pri pridaní novej položky nemusím brať do úvahy poradie hodnot. Vymazávanie nejakej položky zo zdrojového kódu može sposobiť výnimku pri získaní hodnot z databáze. Na druhej strane pri uložení ako `EnumType.ORDINAL` nemusíme získať výnimku, čo može sposobiť zákerné chyby, pretože hodnoty enumov sú zle namapované.
-`@OneToMany(cascade=CascadeType.PERSIST)` - anotácia zoznamov, nastavenie `CascadeType.PERSIST` umožní, aby prvky zoznamu nemuseli byť zvlášť persistované v databáze. Pri uložení entity automaticky sa uložia všetky prvky v zoznamu.
+
+
+* `@Id` a `@GeneratedValue(strategy = GenerationType.AUTO)` - používame u premennej, čo chceme používať ako primárny klúč danej entity. Súčasne používame v entite JPAAbstractEntity a pomocou dedičnosti máme vyriešený primárny klúč pre všetky entity.
+* `@Transient` - takto označené premenné nie sú uložené do databáze. V súčasnej verzii používame pre premennú obsahujúce meno entity.
+* `@Inheritance(strategy=InheritanceType.TABLE_PER_CLASS` alebo `InheritanceType.JOINED`) - značka slúží na zadefinovanie, že ako chceme vytvoriť tabulky relácií pre jednotlivé entity. Nastavenie `TABLE_PER_CLASS` vytvorí vlastnú tabulku so všetkými hodnotami, ktoré v danej entite vyskytujú (vlastné aj dedené). Nastavenie JOINED vytvorí iba jednu tabulu, pre danú entitu a všetky z nej odvodené. Znamená to, že niektoré položky sú prázdne, ale v niektorých prípadoch je to viac prehladný.
+* `@Lob` - síce uloženie velkých súborov máme vyriešené pomocou PgLOBov, ale menšie možeme uložiť aj pomocou JPA anotácie. V tomto prípade premenná sa serializuje a uloží sa do bytového pola - alebo iného kompatibilného typu - v databázovom záznamu. Tento prístup využívame napr. u uložení modelov výpočtov, alebo u dlhých reťazcov XMLov.
+* `@Temporal(TemporalType.TIMESTAMP)` - časové údaje označime pomocou tejto značky a definujeme, že v akom formátu chcem ich uložiť
+* `@Nullable` - daná premenná može byť null v databáze
+* `@Enumerated(EnumType.STRING)` - u premenných odvodených od java.lang.Enum možeme zadefinovať, či chcem aby sa do databáze uložil název hodnoty, alebo jeho poradové číslo (`EnumType.ORDINAL`). Uložiť Enum ako String je výhodnejšie z tohto dovodu, že pri pridaní novej položky nemusím brať do úvahy poradie hodnot. Vymazávanie nejakej položky zo zdrojového kódu može sposobiť výnimku pri získaní hodnot z databáze. Na druhej strane pri uložení ako `EnumType.ORDINAL` nemusíme získať výnimku, čo može sposobiť zákerné chyby, pretože hodnoty enumov sú zle namapované.
+* `@OneToMany(cascade=CascadeType.PERSIST)` - anotácia zoznamov, nastavenie `CascadeType.PERSIST` umožní, aby prvky zoznamu nemuseli byť zvlášť persistované v databáze. Pri uložení entity automaticky sa uložia všetky prvky v zoznamu.
 ________________
 
 
 # Použité skratky
-ARFF - Attribute-Relation File Format
-CSV - Comma-Separated Values
-JDBC - Java Database Connectivity
-SQL - Strucutered Query Language
-HSQLDB - Hyper SQL Database
-PgLOB - Postgre Large Object
-JPA - Java Persistence API
+
+
+* _ARFF_ - Attribute-Relation File Format
+* _CSV_ - Comma-Separated Values
+* _JDBC_ - Java Database Connectivity
+* _SQL_ - Strucutered Query Language
+* _HSQLDB_ - Hyper SQL Database
+* _PgLOB_ - Postgre Large Object
+* _JPA_ - Java Persistence API
