@@ -119,18 +119,32 @@ Rozhodnutie pre JPA znamená, že okrem databáze a technológie pre prístup k 
 ## JPA entity Pikateru
 V súčasnej verzii pre Pikater je vytvorené 16 entit, ktoré sa nachádzajú v balíčku `org.pikater.shared.database.jpa` . Každá entita je odvodená od abstraktnej entity JPAAbstractEntity, čo sa nachádza v rovnakom balíčku. Tento spoločný predek obsahuje iba ID slúžiace, ako primárny klúč v databáze.
 Zoznam entit:
+
+
 1. `JPAAgentInfo` - obsahuje záznamy o agentoch, ktoré sú k dispozicii v systému Pikater. Hlavným účelom týchto entit, je prevod informácii z jadra Pikateru na webové rozhranie, čo získa dáta z databáze
 2. `JPADataSetLO` - obsahuje záznamy o datasetoch uložené v databáze. Nejdolezitejsi je polozka OID, čo obsahuje ID PgLOBu, kde je daný dataset uložený. Položka hash slúži na identifikáciu datasetu pomocou MD5 hashe, čo je vypočítaný pri nahrávaní datasetu. Síce može existovať viac JPADataSetLO entit pre rovnaký hash, ale datasety sú považované za identické pri uploadovaní, takže v databáze sú uložené iba raz a všetky entity obsahujú rovnaký OID .
 Z pohladu roznych metod strojového učenia metadata datasetov hrajú významnú rolu, pretože na základe nich možeme odhadnúť podobnosť dvoch datasetov bez jejich načítaní. Z tohto dovodu tieto metadata sú vypočítané už pri uploadovaní datasetov a sú uložené v odpovedajúcich entitách, ktoré sú spojené s entitou datasetu.
+
+
 3. `JPAGlobalMetaData` - entita pre metadata, ktoré je možné zistiť u každého platného datasetu. Obsahuje dáta o tom, že dataset kolko má dátových riadkov (instancov) a aké atributy obsahuje
 4. JPAAttributeMetadata - entita pre metadata jednotlivých relací (stĺpcov) v rámci datasetu. Tieto metadata je možné zistiť u každého typu atributu a možné z nich zistiť pomer chýbajúcich hodnot (napr. počet riadkov, bez klasifikácie), triedy entropie, či atribut je cielový a aj povodne poradie v datasetu.
+
+
 5. JPAAttributeCategoricalMetadata - entita, čo obsahuje dáta špecifické pre kategorické atributy - ktoré obsahujú hodnoty z nejakej množiny, čo je definovaná v hlavičke datasetu - a je odvodená od JPAAttributeMatadata. V súčasnej dobe dodefinuje premennú pre počet kategorií daného datasetu.
+
+
 6. JPAAttributeNumericalMetadata - táto entita je podobne ako JPAAttributeCategoricalMetadata je odvodená od entity JPAAttributeMetadata. Obsahuje metadata pre numerické relácie datasetu. Numerické relácie možu obsahovať hodnoty s pohyblivou desatinnou čiarkou. Pri vytvorení týchto metadat Weka vypočíta interval týchto hodnot, priemer a rozptyl.
 
 
 U datasetov požívame dve dalšie entity, ktoré majú 
+
+
 7. JPAFilemapping - jednotlivé záznamy predstavujú, pre každý dataset párovanie jeho povodného názvu na MD5 hash súboru. Tento prístup možno nie je najlepší, preto vytvári akoby duplicitný záznam pre datasetov, ale zachová prevodnú tabulku zo starého Pikateru. Hlavným dovodom možnosti použitia povodných názvov v rámci jednotlivých experimentov je zaistenia povodného prístupu, čo zaistil pridanie experimentu z príkazového riadka z XML súboru, čo obsahuje iba klasické názvy datasetov.
+
+
 8. JPATaskType - každý dataset má definovaný typ prednastaveného experimentu. Počítali sme s tým, že množina týchto úloh može byť rozšírený, preto sme rozhodli pre zavedenie entity, čo možeme dynamicky vytvárať pre nové neznáme úlohy.
+
+
 9. [JPABatch](http://github.com/krajj7/pikater/src/org/pikater/shared/database/jpa/JPABatch.java)
 10. JPAExperiment
 1. JPAExternalAgent
