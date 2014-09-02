@@ -158,7 +158,10 @@ Na zjednodušenie vytvorenia konfiguračných súborov je možné používať pr
 
 
 # Práca JPA entitami
-## DAO objekty
+S každou JPA entitou môžeme pracovať ako klasickým java objektom. Môžeme volať ich funkcie, zmeniť premenná. Po tom, ako entitu uložíme do databáze - v JPA terminológii persistujeme - zmeny prevedené na entite sú odzrkadlené do databáze. Jedinou podmienkou je, aby entita bola ešte stále v persistovanom kontextu. Na druhej strane je lešie mať tento kontext čo najmenší, aby sme nemali konflikty medzi entitami.
+Riešením je vytvorenie špeciálnych objektov, ktoré ponúkajú rôzne funkcie, ktoré sa dá používať na entity. Zvykom je pre každý typ entity mať jeden takýto objekt, ale v niektorých prípadoch funkcia vykoná zmeny na viacerých objektoch. Díky podpory tranzakcí tieto zmeny splňajú podmienku ACID. Tieto objekty obvykle nazývame Data Access Objecty( skártene DAO objekty ). Každú zmenu na entitách vykonávame pomocou týchto DAO objektov a pritom nemusíme riešiť problematiku persistence contextu.
+# DAO objekty v Pikateru
+V Pikateru existuje pre každý entitu jeden DAO objekt. Tieto objekty sú zdedené od triedy [AbstractDAO](http://github.com/krajj7/pikater/tree/master/src/org/pikater/shared/database/jpa/daos/AbstractDAO.java) v balíčku `org.pikater.shared.database.jpa.daos`.
 ## Uloženie entity
 ## Dotazovanie entit
 ### JPQL dotazy
