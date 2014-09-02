@@ -102,11 +102,11 @@ Na druhej strane občas potrebujeme používať nasledujúce značky:
 
 * `@Id` a `@GeneratedValue(strategy = GenerationType.AUTO)` - používame u premennej, čo chceme používať ako primárny klúč danej entity. Súčasne používame v entite `JPAAbstractEntity` a pomocou dedičnosti máme vyriešený primárny klúč pre všetky entity.
 * `@Transient` - takto označené premenné nie sú uložené do databáze. V súčasnej verzii používame pre premennú obsahujúce meno entity.
-* `@Inheritance(strategy=InheritanceType.TABLE_PER_CLASS` alebo `InheritanceType.JOINED`) - značka slúží na zadefinovanie, že ako chceme vytvoriť tabulky relácií pre jednotlivé entity. Nastavenie `TABLE_PER_CLASS` vytvorí vlastnú tabulku so všetkými hodnotami, ktoré v danej entite vyskytujú (vlastné aj zdedené). Nastavenie JOINED vytvorí iba jednu tabulu, pre danú entitu a všetky z nej odvodené. Znamená to, že niektoré položky sú prázdne, ale v niektorých prípadoch je to viac prehladný.
+* `@Inheritance(strategy=InheritanceType.TABLE_PER_CLASS` alebo `InheritanceType.JOINED`) - značka slúží na zadefinovanie, že ako chceme vytvoriť tabulky relácií pre jednotlivé entity. Nastavenie `TABLE_PER_CLASS` vytvorí vlastnú tabulku so všetkými hodnotami, ktoré v danej entite vyskytujú (vlastné aj zdedené). Nastavenie `JOINED` vytvorí iba jednu tabulu, pre danú entitu a všetky z nej odvodené. Znamená to, že niektoré položky sú prázdne, ale v niektorých prípadoch je to viac prehladný.
 * `@Lob` - síce uloženie velkých súborov máme vyriešené pomocou PgLOBov, ale menšie môžeme uložiť aj pomocou JPA anotácie. V tomto prípade premenná sa serializuje a uloží sa do bytového pola - alebo iného kompatibilného typu - v databázovom záznamu. Tento prístup využívame napr. u uložení modelov výpočtov, alebo u dlhých reťazcov XMLov.
 * `@Temporal(TemporalType.TIMESTAMP)` - časové údaje označime pomocou tejto značky a definujeme, že v akom formátu chcem ich uložiť
 * `@Nullable` - daná premenná može byť null v databáze
-* `@Enumerated(EnumType.STRING)` - u premenných odvodených od java.lang.Enum môžeme zadefinovať, či chceme aby sa do databáze uložil názov hodnoty, alebo jeho poradové číslo (`EnumType.ORDINAL`). Uložiť Enum ako String je výhodnejšie z tohto dôvodu, že pri pridaní novej položky nemusíme brať do úvahy poradie hodnôt. Vymazanie nejakej položky zo zdrojového kódu môže spôsobiť výnimku pri získaní hodnôt z databáze. Na druhej strane pri uložení ako `EnumType.ORDINAL` nemusíme získať výnimku, čo môže sposobiť zákerné chyby, pretože hodnoty enumov sú zle namapované.
+* `@Enumerated(EnumType.STRING)` - u premenných odvodených od java.lang.Enum môžeme zadefinovať, či chceme aby sa do databáze uložil názov hodnoty, alebo jeho poradové číslo (`EnumType.ORDINAL`). Uložiť `Enum` ako `String` je výhodnejšie z tohto dôvodu, že pri pridaní novej položky nemusíme brať do úvahy poradie hodnôt. Vymazanie nejakej položky zo zdrojového kódu môže spôsobiť výnimku pri získaní hodnôt z databáze. Na druhej strane pri uložení ako `EnumType.ORDINAL` nemusíme získať výnimku, čo môže sposobiť zákerné chyby, pretože hodnoty enumov sú zle namapované.
 * `@OneToMany(cascade=CascadeType.PERSIST)` - anotácia zoznamov, nastavenie `CascadeType.PERSIST` umožní, aby prvky zoznamu nemuseli byť zvlášť persistované v databáze. Pri uložení entity automaticky sa uložia všetky prvky v zoznamu.
 
 
@@ -131,7 +131,7 @@ scope="singleton">
                           <value><!-- database username --></value>
             </constructor-arg>
             <constructor-arg index="2">
-                          <value>  <!-- password for database user--></value>
+                          <value><!-- password for database user--></value>
             </constructor-arg>
 </bean>
 ...
@@ -163,19 +163,27 @@ Na zjednodušenie vytvorenia konfiguračných súborov je možné používať pr
 # Práca s JPA entitami
 S každou JPA entitou môžeme pracovať ako klasickým java objektom. Môžeme volať ich funkcie, zmeniť premenná. Po tom, ako entitu uložíme do databáze - v JPA terminológii persistujeme - zmeny prevedené na entite sú odzrkadlené do databáze. Jedinou podmienkou je, aby entita bola ešte stále v persistovanom kontextu. Na druhej strane je lešie mať tento kontext čo najmenší, aby sme nemali konflikty medzi entitami.
 Riešením je vytvorenie špeciálnych objektov, ktoré ponúkajú rôzne funkcie, ktoré sa dá používať na entity. Zvykom je pre každý typ entity mať jeden takýto objekt, ale v niektorých prípadoch funkcia vykoná zmeny na viacerých objektoch. Díky podpory tranzakcí tieto zmeny splňajú podmienku ACID. Tieto objekty obvykle nazývame Data Access Objecty (skrátene DAO objekty) . Každú zmenu na entitách vykonávame pomocou týchto DAO objektov a pritom nemusíme riešiť problematiku persistence contextu.
+
+
 # DAO objekty v Pikateru
-V Pikateru existuje pre každý entitu jeden DAO objekt. Tieto objekty sú zdedené od triedy [AbstractDAO](http://github.com/krajj7/pikater/tree/master/src/org/pikater/shared/database/jpa/daos/AbstractDAO.java) v balíčku `org.pikater.shared.database.jpa.daos`.
+V Pikateru existuje pre každú entitu jeden DAO objekt. Tieto objekty sú zdedené od triedy [AbstractDAO](http://github.com/krajj7/pikater/tree/master/src/org/pikater/shared/database/jpa/daos/AbstractDAO.java) v balíčku `org.pikater.shared.database.jpa.daos`.
+
+
+##AbstractDAO
 
 
 abstractdao elég sok mindent csinál, ezért volt fontos, hogy legyen öröklődés
 
 
-## Uloženie entity
-## Dotazovanie entit
-### JPQL dotazy
-### Pomenované dotazy
-### Criteria dotazy
-## Vymazanie entít
+### Uloženie entity
+### Dotazovanie entit
+#### JPQL dotazy
+#### Pomenované dotazy
+#### Criteria dotazy
+### Vymazanie entít
+
+
+## erdekes DAOk
 
 
 
@@ -190,3 +198,6 @@ abstractdao elég sok mindent csinál, ezért volt fontos, hogy legyen öröklő
 * _HSQLDB_ - Hyper SQL Database
 * _PgLOB_ - Postgre Large Object
 * _JPA_ - Java Persistence API
+* _DAO_ - Data Access Object
+* _ACID_ - Atomicity, Consistency, Isolation, Durability
+* _JPQL_ - Java Persistence Query Language
