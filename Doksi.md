@@ -111,7 +111,7 @@ Na druhej strane občas potrebujeme používať nasledujúce značky:
 
 
 # Konfigurácia JPA
-V starej verzii Pikateru na konfiguráciu databázového pripojenia slúžil iba súbor `Beans.xml`. Pomocu knižnice Spring na základe tohto súboru bol spístupnený objekt databázového pripojenia. Tento objekt bol získaný pomocou funkcie `ApplicationContext.getBean` .
+V starej verzii Pikateru na konfiguráciu databázového pripojenia slúžil iba súbor `Beans.xml`. Pomocu knižnice Spring na základe tohto súboru bol sprístupnený objekt databázového pripojenia. Tento objekt bol získaný pomocou funkcie `ApplicationContext.getBean` .
 
 
 Pikater stále potrebuje nativný prístup do databáze, kvôli PgLOBom, preto sme sa rozhodli, že zachováme `Beans.xml` súbor a pre plynulejší prechod z hladiska konfigurácie necháme na pôvodnom mieste a to v koreňovom adresári zdrojového kódu.
@@ -120,7 +120,10 @@ Pikater stále potrebuje nativný prístup do databáze, kvôli PgLOBom, preto s
 Časť v súboru `Beans.xml` zodpovedná za vytvorenie databázového pripojenia:
 ```
 ...
-<bean id="defaultConnection" class="org.pikater.shared.database.connection.PostgreSQLConnectionProvider" scope="singleton">
+<bean
+id="defaultConnection"
+class="org.pikater.shared.database.connection.PostgreSQLConnectionProvider"
+scope="singleton">
             <constructor-arg index="0">
                           <value><!-- url --></value>
             </constructor-arg>
@@ -138,9 +141,9 @@ Pikater stále potrebuje nativný prístup do databáze, kvôli PgLOBom, preto s
 Okrem natívneho databázového pripojenia potrebujeme, aby správca JPA entít mal takisto prístup k databázi. Okrem toho, musí poznať, že ktoré triedy má považovať za entity. Na túto konfiguráciu slúži súbor `persistence.xml` , čo musí byť uložený v zložke `META-INF`. Tento súbor musí obsahovať zoznam entít v našom programu vo forme, ako to ukáže nasledovný príklad:
 ```
 <persistence-unit name="pikaterDataModel" transaction-type="RESOURCE_LOCAL">
-          <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
-        ...
- <class>org.pikater.shared.database.jpa.JPADataSetLO</class>
+<provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+…
+<class>org.pikater.shared.database.jpa.JPADataSetLO</class>
 ...
 ```
 Na definovanie databázového pripojenia máme viac možností. Jednak možeme pridať vlastnosti pripojenia do súboru `persistence.xml`. Druhá možnosť je využívať Spring na injektovania správce entít (trieda `EntityManagerFactory`), kde definujeme pripojenie čo sa má používať. 
@@ -157,11 +160,16 @@ Pre nás znamenal problém vytvoriť si `EntityManagerFactory` pomocou `Beans.xm
 Na zjednodušenie vytvorenia konfiguračných súborov je možné používať program `org.pikater.shared.database.util.initialisation.DatabaseInitialisation`, do ktorého môžeme pomocou príkazového riadka zadať potrebné údaje a vygeneruje nám obidva konfiguračné súbory.
 
 
-# Práca JPA entitami
+# Práca s JPA entitami
 S každou JPA entitou môžeme pracovať ako klasickým java objektom. Môžeme volať ich funkcie, zmeniť premenná. Po tom, ako entitu uložíme do databáze - v JPA terminológii persistujeme - zmeny prevedené na entite sú odzrkadlené do databáze. Jedinou podmienkou je, aby entita bola ešte stále v persistovanom kontextu. Na druhej strane je lešie mať tento kontext čo najmenší, aby sme nemali konflikty medzi entitami.
-Riešením je vytvorenie špeciálnych objektov, ktoré ponúkajú rôzne funkcie, ktoré sa dá používať na entity. Zvykom je pre každý typ entity mať jeden takýto objekt, ale v niektorých prípadoch funkcia vykoná zmeny na viacerých objektoch. Díky podpory tranzakcí tieto zmeny splňajú podmienku ACID. Tieto objekty obvykle nazývame Data Access Objecty( skártene DAO objekty ). Každú zmenu na entitách vykonávame pomocou týchto DAO objektov a pritom nemusíme riešiť problematiku persistence contextu.
+Riešením je vytvorenie špeciálnych objektov, ktoré ponúkajú rôzne funkcie, ktoré sa dá používať na entity. Zvykom je pre každý typ entity mať jeden takýto objekt, ale v niektorých prípadoch funkcia vykoná zmeny na viacerých objektoch. Díky podpory tranzakcí tieto zmeny splňajú podmienku ACID. Tieto objekty obvykle nazývame Data Access Objecty (skrátene DAO objekty) . Každú zmenu na entitách vykonávame pomocou týchto DAO objektov a pritom nemusíme riešiť problematiku persistence contextu.
 # DAO objekty v Pikateru
 V Pikateru existuje pre každý entitu jeden DAO objekt. Tieto objekty sú zdedené od triedy [AbstractDAO](http://github.com/krajj7/pikater/tree/master/src/org/pikater/shared/database/jpa/daos/AbstractDAO.java) v balíčku `org.pikater.shared.database.jpa.daos`.
+
+
+abstractdao elég sok mindent csinál, ezért volt fontos, hogy legyen öröklődés
+
+
 ## Uloženie entity
 ## Dotazovanie entit
 ### JPQL dotazy
