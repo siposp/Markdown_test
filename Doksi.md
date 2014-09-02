@@ -111,6 +111,50 @@ Na druhej strane občas potrebujeme používať nasledujúce značky:
 
 
 # Konfigurácia JPA
+V starej verzii Pikateru na konfiguráciu databázového pripojenia slúžil iba súbor `Beans.xml`. Pomocu knižnice Spring na základe tohto súboru bol spístupnený objekt databázového pripojenia. Tento objekt bol získaný pomocou funkcie `ApplicationContext.getBean` .
+
+
+Pikater stále potrebuje nativný prístup do databáze, kvôli PgLOBom, preto sme sa rozhodli, že zachováme `Beans.xml` súbor a pre plynulejší prechod z hladiska konfigurácie necháme na pôvodnom mieste a to v koreňovom adresári zdrojového kódu.
+
+
+Časť v súboru `Beans.xml` zodpovedná za vytvorenie databázového pripojenia:
+```
+...
+<bean id="defaultConnection" class="org.pikater.shared.database.connection.PostgreSQLConnectionProvider" scope="singleton">
+            <constructor-arg index="0">
+                          <value><!-- url --></value>
+            </constructor-arg>
+            <constructor-arg index="1">
+                          <value><!-- database username --></value>
+            </constructor-arg>
+            <constructor-arg index="2">
+                          <value>  <!-- password for database user--></value>
+            </constructor-arg>
+</bean>
+...
+```
+
+
+Okrem natívneho databázového pripojenia potrebujeme, aby správca JPA entít mal takisto prístup k databázi. Okrem toho, musí poznať, že ktoré triedy má považovať za entity. Na túto konfiguráciu slúži súbor `persistence.xml` , čo musí byť uložený v zložke `META-INF`. Tento súbor musí obsahovať zoznam entít v našom programu vo forme, ako to ukáže nasledovný príklad:
+```
+<persistence-unit name="pikaterDataModel" transaction-type="RESOURCE_LOCAL">
+          <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
+        ...
+ <class>org.pikater.shared.database.jpa.JPADataSetLO</class>
+...
+```
+Na definovanie databázového pripojenia máme viac možností. Jednak možeme pridať vlastnosti pripojenia do súboru `persistence.xml`. Druhá možnosť je využívať Spring na injektovania správce entít (trieda `EntityManagerFactory`), kde definujeme pripojenie čo sa má používať. 
+My sme sa rozhodli využívať iba súbor `persistence.xml` a to z viacerých dôvodov:
+
+
+* pri vytvorení EntityManagerFactory môžeme v zdrojovom kódu nastaviť vlastnosti pripojenia
+* väčšiou výhodou bola sloboda pri vytvorení tried na spravovanie entít.
+
+
+Pre nás znamenal problém vytvoriť si `EntityManagerFactory` pomocou `Beans.xml` z dôvodu, že Spring interne používá javovské `Proxy` triedy pri vytvorení inštancií jednotlivých beanu. To znamená, že pre každý interface, čo dedí daná trieda je vytvorený jeden `Proxy` objekt, čo musíme pretypovať na typ interfaceu. `EntityManagerFactory` má vela interfaceov od ktorých sa dedí a ani jeden nepokrýva celú funkčnosť triedy a z tohto dôvodu nefunguje prístup pomocou funkcie `ApplicationContext.getBean`. Z podobného dôvodu sme nechceli injektovať `EntityManager`y (získané pomocou `EntityManagerFactory`) do objektov slúžiace na spravovanie entít, lebo v tom prípade tie objekty sú vytvorené takisto pomocou Springu a tým pádom pre každý takýto objekt potrebujeme jeden interface.
+
+
+Na zjednodušenie vytvorenia konfiguračných súborov je možné používať program `org.pikater.shared.database.util.initialisation.DatabaseInitialisation`, do ktorého môžeme pomocou príkazového riadka zadať potrebné údaje a vygeneruje nám obidva konfiguračné súbory.
 
 
 # Práca JPA entitami
